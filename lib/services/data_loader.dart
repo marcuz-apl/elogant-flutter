@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
+import 'package:drift/drift.dart';
 import 'package:las_dart/las_dart.dart';
 import 'package:path/path.dart' as p;
 import '../database/database.dart';
@@ -69,8 +70,8 @@ class DataLoaderService {
                 LasLogDataCompanion.insert(
                   wellName: fileName,
                   mnemonic: mnemonic as String,
-                  unit: const Value(''), // Unit not currently returned by backend
-                  description: const Value(''),
+                  unit: Value(''), // Unit not currently returned by backend
+                  description: Value(''),
                   dataJson: jsonEncode(curveData),
                 ),
               );
