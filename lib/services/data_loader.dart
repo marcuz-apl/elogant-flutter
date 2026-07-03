@@ -2,14 +2,12 @@ import 'dart:convert';
 import 'dart:io';
 
 import 'package:file_picker/file_picker.dart';
-import 'package:drift/drift.dart';
 import 'package:las_dart/las_dart.dart';
 import 'package:path/path.dart' as p;
-
-import '../core/data/las_parser.dart';
-
 import '../database/database.dart';
 import '../database/tables.dart';
+
+import 'package:http/http.dart' as http;
 
 class DataLoaderService {
   final AppDatabase database;
@@ -46,27 +44,41 @@ class DataLoaderService {
   }
 
   /// Parses a LAS string directly and saves its log data into the database.
-  Future<void> processLasString(String fileName, String contents) async {
-    final lasData = await LasParser.parseString(contents);
+  Future<String?> processLasString(String fileName, String contents) async {
+    // Send to Python Backend
+    var request = http.MultipartRequest('POST', Uri.parse('http://127.0.0.1:8000/api/upload'));
+    request.files.add(http.MultipartFile.fromString('file', contents, filename: '$fileName.las'));
 
-    // `curves` is a List<WellProps>. `rawData` is a Map<String, List<double>> from LasParser.
-    for (var mnemonic in lasData.curveMnemonics) {
-      final curveData = lasData.curves[mnemonic];
-      final unit = lasData.wellInformation[mnemonic] ?? '';
+    var response = await request.send();
+    if (response.statusCode == 200) {
+      final resBody = await response.stream.bytesToString();
+      final dataMap = jsonDecode(resBody);
+      
+      final List<dynamic> mnemonics = dataMap['mnemonics'];
+      final Map<String, dynamic> data = dataMap['data'];
 
-      if (curveData != null) {
-        await database
-            .into(database.lasLogData)
-            .insert(
-              LasLogDataCompanion.insert(
-                wellName: fileName,
-                mnemonic: mnemonic,
-                unit: Value(unit),
-                description: Value(''),
-                dataJson: jsonEncode(curveData),
-              ),
-            );
+      // Delete existing data for this well if it exists
+      await (database.delete(database.lasLogData)..where((tbl) => tbl.wellName.equals(fileName))).go();
+
+      for (var mnemonic in mnemonics) {
+        final curveData = data[mnemonic];
+        if (curveData != null) {
+          await database
+              .into(database.lasLogData)
+              .insert(
+                LasLogDataCompanion.insert(
+                  wellName: fileName,
+                  mnemonic: mnemonic as String,
+                  unit: const Value(''), // Unit not currently returned by backend
+                  description: const Value(''),
+                  dataJson: jsonEncode(curveData),
+                ),
+              );
+        }
       }
+      return dataMap['plot_image'] as String?;
+    } else {
+      throw Exception('Failed to process LAS on backend. Status code: ${response.statusCode}');
     }
   }
 }

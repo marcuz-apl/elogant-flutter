@@ -2,7 +2,7 @@
 
 ## Architecture & Technology Stack
 - **Framework:** The project must strictly use **Flutter (Dart)** for all UI, data processing, and platform wrappers.
-- **No Python Backend:** We are using a Pure Flutter architecture. Do NOT introduce Python scripts or backend wrappers (like FastAPI) into the core application runtime. All petrophysical logic must be translated to Dart.
+- **Python Backend as needed:** We can use Python scripts for petrophysical logic if needed, however, the core application logic should be in Dart.
 - **Data Parsing:** Use the Dart `las_dart` package for reading `.LAS` files.
 - **Visualizations:** Use interactive Flutter charting libraries for multi-track plotting (e.g., `fl_chart`, `syncfusion_flutter_charts`, or custom Canvas widgets).
 

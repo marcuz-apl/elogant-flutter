@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:fl_chart/fl_chart.dart';
-import '../../core/data/las_parser.dart';
 
 class MultiTrackPlot extends StatelessWidget {
-  final LasData lasData;
+  final dynamic lasData;
   final Map<String, List<double>> results;
 
   const MultiTrackPlot({Key? key, required this.lasData, required this.results})

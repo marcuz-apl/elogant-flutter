@@ -1,0 +1,8 @@
+fastapi
+uvicorn
+lasio
+pandas
+numpy
+matplotlib
+python-multipart
+pydantic

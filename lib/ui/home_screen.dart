@@ -3,8 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 
-import '../core/data/las_parser.dart';
-import '../core/petrophysics/calculator.dart';
 import 'components/global_header.dart';
 import 'components/global_footer.dart';
 import 'components/sidebar.dart';
@@ -25,7 +23,7 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  LasData? _lasData;
+  dynamic _lasData;
   Map<String, List<double>>? _results;
   bool _isLoading = false;
   String _activeWellFilename = '-- Select Well --';
@@ -35,6 +33,7 @@ class _HomeScreenState extends State<HomeScreen> {
   bool _isDataLoaderOpen = true;
   bool _wrangleMode = false;
   bool _showTripleCombo = false;
+  String? _plotImageBase64;
 
   late DataLoaderService _dataLoaderService;
 
@@ -82,10 +81,9 @@ class _HomeScreenState extends State<HomeScreen> {
           RegExp(r'\.las$', caseSensitive: false),
           '',
         );
-        await _dataLoaderService.processLasString(wellNameWithoutExt, contents);
-
-        // We still need memory representation for other widgets if they haven't been migrated
-        _lasData = await LasParser.parseString(contents);
+        String? plotB64 = await _dataLoaderService.processLasString(wellNameWithoutExt, contents);
+        _plotImageBase64 = plotB64;
+        
         _activeWellFilename = platformFile.name;
         _showTripleCombo = true;
         _runCalculations();
@@ -100,19 +98,11 @@ class _HomeScreenState extends State<HomeScreen> {
   }
 
   void _runCalculations() {
-    if (_lasData != null) {
-      setState(() {
-        _results = PetrophysicsCalculator.calculateAll(
-          _lasData!,
-          grClean: _grClean,
-          grClay: _grClay,
-          a: _aConst,
-          m: _mConst,
-          n: _nConst,
-          rwa: _rw,
-        );
-      });
-    }
+    // Python backend now handles calculations during upload.
+    // In a full implementation, we'd fetch the computed curves from SQLite here.
+    setState(() {
+      _results = {};
+    });
   }
 
   @override
@@ -175,6 +165,7 @@ class _HomeScreenState extends State<HomeScreen> {
                                         wellName: _activeWellFilename
                                             .replaceAll('.las', '')
                                             .replaceAll('.LAS', ''),
+                                        base64Image: _plotImageBase64,
                                       )
                                     : _wrangleMode
                                     ? WrangleView(
