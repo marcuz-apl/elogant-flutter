@@ -1,0 +1,2 @@
+test/sample/* linguist-vendored
+*.dart linguist-detectable=true 
